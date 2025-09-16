@@ -1,0 +1,260 @@
+header {
+    position: relative;
+    
+    margin-bottom: 1rem;
+    height: 3rem;
+
+    display: grid;
+    place-items: center;
+    
+    .radio {
+        position: absolute;
+        left: 0;
+
+        display: flex;
+
+        button {
+            display: grid;
+            place-items: center;
+
+            height: 3rem;
+            width: 3rem;
+
+            &:hover:not(.selected) { cursor: pointer; }
+            &.selected {
+                background-color: var(--red);
+                color: var(--white);
+            }
+            input { display: none; }
+        }
+    }
+}
+
+
+#page {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: stretch;
+}
+
+#left {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+$cell-height: 2.5rem;
+$cell-width: 4.5rem;
+%target-header {
+    color: var(--white);
+    background-color: var(--red);
+}
+%border-base {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    border: var(--border);
+    box-sizing: border-box;
+}
+@mixin category-border($anchor, $value, $nrow, $ncol) {
+    @extend %border-base;
+    #{$anchor}: $value;
+    height: $nrow * $cell-height;
+    width: $ncol * $cell-width;
+}
+
+.table {
+    display: grid;
+    .header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .header {
+        font-weight: var(--bold);
+        position: relative;
+        &:hover { @extend %target-header; }
+    }
+    button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        &:hover:not(.selected) {
+            box-sizing: border-box;
+            border: var(--border);
+        }
+        &.selected {
+            border: var(--bold-border);
+        }
+        &.shadow {
+            font-weight: var(--light); color: var(--grey);
+        }
+    }
+}
+
+#initials {
+    grid-template: repeat(8, $cell-height) / repeat(6, $cell-width);
+
+    .top { display: contents; }
+    .rows {
+        display: contents;
+        .row { display: contents; }
+        .suprow {
+            grid-row: span 2;
+            grid-column: 1/-1;
+
+            display: grid;
+            grid-template: subgrid / repeat(2, calc($cell-width / 2)) repeat(5, $cell-width);
+
+            > .header {
+                grid-row: span 2;
+                writing-mode: vertical-lr;
+            }
+        }
+    }
+
+    .row:has(.cell:hover) .header { @extend %target-header; }
+    .suprow {
+        &:has(.cell:hover, .row .header:hover) > .header { @extend %target-header; }
+        > .header:hover ~ .row .header { @extend %target-header; }
+    }
+
+    @for $j from 1 through 5 {
+        &:has(.row .cell:nth-child(#{$j+1}):hover) .top :nth-child(#{$j}) {
+            @extend %target-header;
+        }
+    }
+
+    .row .header:hover::after {
+        @include category-border(right, -5*$cell-width, 1, 5);
+    }
+    .suprow > .header:hover::after {
+        @include category-border(left, $cell-width, 2, 5);
+    }
+    .top .header:hover::after {
+        @include category-border(top, $cell-height, 7, 1);
+    }
+}
+
+#finals {
+    grid-template: repeat(13, $cell-height) / repeat(6, $cell-width);
+
+    .head {
+        display: contents;
+        :first-child, :nth-child(3) { grid-row: span 2; }
+        :nth-child(2) { grid-column: span 4; }
+    }
+    .top { display: contents; }
+    .left, .right {
+        grid-row: span 11;
+        display: grid;
+        grid-template-rows: subgrid;
+    }
+    .left :not(:first-child) { grid-row: span 5; }
+    .right :first-child { grid-row: span 2; }
+    .rows {
+        grid-row: span 11;
+        grid-column: span 4;
+        display: grid;
+        grid-template: subgrid / subgrid;
+        .row { display: contents; }
+    }
+
+    .head {
+        &:has(:first-child:hover) ~ .left *, 
+        &:has(:nth-child(2):hover) ~ .top *,
+        &:has(:nth-child(3):hover) ~ .right * {
+            @extend %target-header;
+        }
+    }
+
+    @for $j from 1 through 4 {
+        &:has(.row .cell:nth-child(#{$j}):hover) .top :nth-child(#{$j}) {
+            @extend %target-header;
+        }
+    }
+    @for $l from 1 through 3 {
+        &:has(.row.l#{$l} .cell:hover) .left :nth-child(#{$l}) {
+            @extend %target-header;
+        }
+    }
+    @for $r from 1 through 5 {
+        &:has(.row.r#{$r} .cell:hover) .right :nth-child(5n+#{$r}) {
+            @extend %target-header;
+        }
+    }
+
+    .top .header:hover::after {
+        @include category-border(top, $cell-height, 11, 1);
+    }
+    .left {
+        :first-child:hover::after {
+            @include category-border(left, $cell-width, 1, 4);
+        }
+        :not(:first-child):hover::after {
+            @include category-border(left, $cell-width, 5, 4);
+        }
+    }
+
+    %border-right-1 { @include category-border(right, $cell-width, 1, 4); }
+    %border-right-2 { @include category-border(right, $cell-width, 2, 4); }
+
+    .right {
+        &:has(:nth-child(5n+1):hover) {
+            :first-child {
+                @extend %target-header;
+                &::after { @extend %border-right-2; }
+            }
+            :nth-child(6) {
+                @extend %target-header;
+                &::after { @extend %border-right-1; }
+            }
+        }
+        @for $r from 2 through 5 {
+            &:has(:nth-child(5n+#{$r}):hover) :nth-child(5n+#{$r}) {
+                @extend %target-header;
+                &::after { @extend %border-right-1; }
+            }
+        }
+    }
+}
+
+#specials {
+    grid-template: repeat(4, $cell-height) / $cell-width;
+
+    &:hover .header { @extend %target-header; }
+    .header:hover::after {
+        @include category-border(top, $cell-height, 3, 1);
+    }
+}
+
+#tones {
+    grid-template: $cell-height 2*$cell-height / repeat(5, $cell-width);
+    .head, .cells { display: contents; }
+    .cell {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+
+        font-size: 2rem;
+        font-weight: var(--light);
+        cursor: pointer;
+        user-select: none;
+        span { 
+            font-size: 1rem; 
+            font-weight: var(--regular);
+        }
+    }
+
+    @for $j from 1 through 5 {
+        &:has(.cell:nth-child(#{$j}):hover) .head .header:nth-child(#{$j}) {
+            @extend %target-header;
+        }
+        &:has(.header:nth-child(#{$j}):hover) .cells .cell:nth-child(#{$j}) {
+            box-shadow: inset 0 0 0 var(--border-size) var(--red);
+        }
+    }
+}
